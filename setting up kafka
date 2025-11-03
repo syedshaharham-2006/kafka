@@ -1,0 +1,156 @@
+---------- Kafka 101 Overview ----------
+
+Key Aspects of Kafka:
+- Volume: Kafka can handle a massive amount of data in real-time.
+- Variety: Kafka supports various data formats and types, making it versatile for diverse use cases.
+- Velocity: Kafka allows for frequent data production, making it ideal for real-time streaming.
+
+Kafka vs Other Solutions:
+- Kinesis: AWS's real-time data streaming service.
+- Kafka: Open-source, distributed event streaming platform.
+- MSK (Managed Streaming for Kafka): Fully managed Kafka service on AWS.
+
+Why Kafka?
+Advantages:
+- Cloud-Agnostic: Unlike other solutions, Kafka works across different cloud providers.
+- Open Source: Free to use and customize, with a large community.
+- Widely Adopted: Used by leading companies to handle real-time data streams.
+
+------------------------ Where to Download Kafka ------------------------
+
+Download Kafka:
+- Download Java JDK: https://www.oracle.com/europe/java/technologies/downloads/
+- Download Kafka: https://dlcdn.apache.org/kafka/3.9.1/kafka_2.13-3.9.1.tgz
+
+Run the following commands to ensure your Java environment is set up correctly:
+- java -version
+- echo %JAVA_HOME%
+
+---------- If there’s any issue: ----------
+
+Go to: C:\Program Files\Java\jdk-xx
+
+Set JAVA_HOME:
+- Press the Windows key, search for "Environment Variables"
+- Click Edit the system environment variables
+- Under System Properties, click Environment Variables...
+- Add a new variable:
+    - Variable name: JAVA_HOME
+    - Variable value: (your JDK path)
+
+Add Java to PATH:
+- Under System variables, select Path → Edit → New
+- Add: %JAVA_HOME%\bin
+
+----------------- Kafka Setup Steps -----------------
+
+-------------------- Step 1: Create Folders --------------------
+
+kafka_2.13-3.9.1/
+│
+├── kafka_logs/
+│   ├── zookeeper/
+│   └── server_logs/
+
+------------------ Step 2: Configure zookeeper.properties ------------------
+
+- Open zookeeper.properties and update as follows:
+
+kafka_2.13-3.9.1/
+│
+├── config/
+│   ├── zookeeper.properties
+│   ├── server_logs.properties
+
+dataDir=C:\kafka\kafka_logs\zookeeper
+maxClientCnxns=1
+
+Note: The maxClientCnxns property limits the number of active connections from a host.
+
+----------- Step 3: Configure server.properties -----------
+
+- Open server.properties and update as follows:
+
+# Uncomment listeners line
+log.dirs=C:\kafka\kafka_logs\server_logs
+zookeeper.connect=localhost:2181
+zookeeper.connection.timeout.ms=60000
+
+------------------- Starting Kafka -------------------
+
+------------ Start Zookeeper: ------------
+
+Run the following command to start Zookeeper:
+
+C:\kafka\kafka_2.13-3.9.1\bin\windows\zookeeper-server-start.bat C:\kafka\kafka_2.13-3.9.1\config\zookeeper.properties
+
+------------- Start Kafka Server: --------------
+
+Run the following command to start Kafka:
+C:\kafka\kafka_2.13-3.9.1\bin\windows\kafka-server-start.bat C:\kafka\kafka_2.13-3.9.1\config\server.properties
+
+----- Creating and Managing Topics -----
+
+Create a Topic:
+Run the following command to create a Kafka topic:
+
+C:\kafka\kafka_2.13-3.9.1\bin\windows\kafka-topics.bat --create --topic hello_world --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
+
+----------- List Topics: ------------
+
+Run the following command to list all topics:
+
+C:\kafka\kafka_2.13-3.9.1\bin\windows\kafka-topics.bat --list --bootstrap-server localhost:9092
+
+------------------- Kafka Producer & Consumer --------------------
+
+Start Kafka Producer:
+Run the following command to start the Kafka producer:
+
+C:\kafka\kafka_2.13-3.9.1\bin\windows\kafka-console-producer.bat --topic hello_world --bootstrap-server localhost:9092
+
+-------------------- Start Kafka Consumer: -----------------
+
+Run the following command to start the Kafka consumer:
+
+C:\kafka\kafka_2.13-3.9.1\bin\windows\kafka-console-consumer.bat --topic hello_world --from-beginning --bootstrap-server localhost:9092
+
+---------------- Kafka-Python Installation ----------------
+
+Install Kafka-Python:
+Run the following command to install Kafka's Python client:
+
+pip install kafka-python
+
+-------------------- Python Producer Code -------------------
+
+Here is a Python script to send data to Kafka:
+
+from time import sleep
+from json import dumps
+from kafka import KafkaProducer
+
+# Kafka topic
+topic_name = 'sf-testing'
+
+# Create a Kafka producer instance
+producer = KafkaProducer(
+    bootstrap_servers=['localhost:9092'],
+    value_serializer=lambda x: dumps(x).encode('utf-8'),
+    acks='all'  # Ensure data is acknowledged by all brokers
+)
+
+# Send messages
+for e in range(10):
+    data = {
+        'order_id': 1000 + e,
+        'customer': f'customer_{e}',
+        'amount': round(50 + e * 7.5, 2),
+        'status': 'shipped' if e % 2 == 0 else 'processing'
+    }
+    print(f"Sending order: {data['order_id']} | Customer: {data['customer']} | Amount: {data['amount']} | Status: {data['status']}")
+    producer.send(topic_name, value=data)
+    sleep(1)  # Simulate delay between messages
+
+producer.flush()  # Ensure all messages are sent
+producer.close()  # Close the producer connection
